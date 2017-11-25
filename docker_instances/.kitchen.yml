@@ -1,0 +1,49 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  name: chef_zero
+  # You may wish to disable always updating cookbooks in CI or other testing environments.
+  # For example:
+  #   always_update_cookbooks: <%= !ENV['CI'] %>
+  always_update_cookbooks: false
+  require_chef_omnibus: true
+  chef_omnibus_url: file:///mnt/share/scripts/install.sh
+  environments_path: /Users/ongomr/DevOps/chef/envs
+  roles_path: /Users/ongomr/DevOps/chef/roles
+verifier:
+  name: inspec
+
+platforms:
+  - name: xenial
+    driver:
+      customize:
+       memory: 1024
+       cpus: 1
+      box: xenial
+      box_url: /Users/ongomr/DevOps/vagrant/boxes/xenial.box
+      network:
+      - ["private_network", {ip: "192.168.56.80"}]
+      synced_folders:
+      - ["/Users/ongomr/DevOps/chef/share/", "/mnt/share", "disabled: false"]
+
+# Allocation Range started at IP: 192.168.56.100
+suites:
+  - name: elkstack
+    environment: lab
+    driver:
+      vm_hostname: elksrv
+      customize:
+       memory: 2048
+       cpus: 2
+      network:
+      - ["private_network", {ip: "192.168.56.110"}]
+    run_list:
+      - recipe[elkstack::default]
+    verifier:
+      inspec_tests:
+        - test/smoke/default
+    excludes:
+      -
+    attributes:
